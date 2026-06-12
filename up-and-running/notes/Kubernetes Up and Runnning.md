@@ -1,80 +1,156 @@
-# Kubernetes Up and Runnning
+# Kubernetes Up and Running - Resumos
 
-## Chapter 1 - Introduction
+## Capítulo 1 - Introduction
 
-### Definition
+### Visão Geral
 
-Kubernetes is an open source orchestrator for deploying containerized applications.
+O Capítulo 1 estabelece os fundamentos do Kubernetes como um orquestrador de contêineres. Explica por que Kubernetes foi criado, quais problemas ele resolve e os princípios arquiteturais que tornam possível construir sistemas distribuídos confiáveis, escaláveis e eficientes. O capítulo conecta conceitos abstratos (como imutabilidade e configuração declarativa) com benefícios práticos para desenvolvimento, operações e negócios.
 
-### Whose from
+### O que é Kubernetes?
 
-It was originally developed by Google, inspired by a decade of experience deploying scalable, reliable systems in containers via application-oriented APIs.
+- **Definição**: Orquestrador open source para implantar aplicações em contêineres
+- **Origem**: Desenvolvido pelo Google, inspirado em uma década de experiência com sistemas em contêineres (Borg, Omega)
+- **Lançamento**: 2014
+- **Escopo**: Adequado desde clusters Raspberry Pi até datacenters com milhares de máquinas
+- **Propósito**: Simplificar o desafio de construir sistemas distribuídos **confiáveis, escaláveis e disponíveis**
 
-### When it was launch?
+### Cinco Razões para Usar Kubernetes
 
-2014
+1. **Development Velocity (Velocidade de Desenvolvimento)**
+   - Antes: Software distribuído em CDs/DVDs, manutenção planejada, uptime não garantido
+   - Agora: Serviços web, atualizações horárias, expectativa de uptime 24/7
+   - Kubernetes permite iterar rapidamente mantendo confiabilidade alta
 
-### Topics
+2. **Scaling (Escalabilidade de Software e Equipes)**
+   - Desacoplamento de componentes via APIs e load balancers
+   - Equipes pequenas ("two-pizza teams") podem escalar independentemente
+   - Reduz complexidade de comunicação entre times
 
-- distributed system
-- reliable
-- availability
-- scalable
+3. **Abstracting Your Infrastructure (Abstração da Infraestrutura)**
+   - Desenvolvedores trabalham com APIs orientadas a aplicações, não máquinas virtuais
+   - Portabilidade: mesmo código roda em on-prem, clouds públicas ou ambientes híbridos
+   - Evita vendor lock-in
 
-### Benefits
+4. **Efficiency (Eficiência Operacional e Econômica)**
+   - Consolidação: múltiplas aplicações compartilham máquinas sem impacto
+   - Redução de desperdício (CPU ociosa)
+   - Testes baratos: criar ambientes de teste em contêineres é rápido e barato
+   - Autoscaling automático reduz custos sob demanda
 
-- Development velocity
-- Scaling (of both software and teams)
-- Abstracting your infrastructure
-- Efficiency
-- Cloud native ecosystem
+5. **Cloud Native Ecosystem**
+   - Kubernetes é extensível e aberto à comunidade
+   - Ecossistema vibrante: ferramentas para observabilidade, segurança, storage, CI/CD
+   - CNCF fornece maturidade e padronização (sandbox → incubating → graduated)
 
-### Velocity
+### Conceitos Arquiteturais Fundamentais
 
-- Software changed
-  - Before
-    - Shipping products as boxed CDs or DVDs
-    - It was normal to have websites in maintenance mode
-  - Now
-    - Network via web-based services
-    - Deployed hourly
-    - The web sites must be up all the time
+#### **Imutabilidade (Immutability)**
 
-So Kubernetes have some characteristics that improves the velocity based on these concepts:
+**Problema tradicional**: Infraestrutura mutável = estado desconhecido
+- Atualizações incrementais (`apt-get update`) deixam resíduos e histórico não rastreável
+- Rollback é complexo e caro
+- Mudanças podem vir de upgrades do sistema, modificações de operadores, etc.
 
-	- Immutability
-	- Declarative configuration
-	- Online self-healing systems
-	- Shared reusable libraries and tools
+**Solução em contêineres**: Infraestrutura imutável
+- Ao invés de modificar um contêiner existente, **constrói-se uma imagem nova**
+- A imagem antiga permanece disponível para rollback (basta trocar o rótulo)
+- Histórico completo de mudanças é visível
+- Reproduzibilidade garantida: mesma imagem = mesmo comportamento
 
-### The Value of Immutability
+**Padrão anti**: Tentar modificar contêineres em produção (mesmo que tecnicamente possível)
 
-Declarative x Imperative configuration
+#### **Configuração Declarativa (Declarative Configuration)**
 
-### Scaling Your Service and Your teams
+**Imperativo vs Declarativo**:
+- **Imperativo**: "Execute estes passos" → "rode A, rode B, rode C" (ordem importa, frágil a falhas)
+- **Declarativo**: "Desejo que o estado seja X" → Kubernetes garante que o estado atual sempre corresponda
 
-#### Decoupling 
+**Benefícios**:
+- Pode ser armazenado em Git (infrastructure as code)
+- Ferramentas padrão de desenvolvimento (code review, versionamento) aplicáveis
+- GitOps: Git é a fonte de verdade
+- Rollback: simplesmente revert o commit
 
-- Each team can focus on a single service to adhere the microservices architecture
-#### Easy Scaling for Applications and Clusters
+**Padrão**: Toda configuração em Kubernetes é declarativa (manifests YAML descrevem desired state)
 
-- Since it is a declarative configuration, it is easy to scale, cause it needs to create another containres from the same image and environment variables (of course with some alterations like port number)
-#### Scaling Development Teams with Microservices
+#### **Sistemas Auto-Reparáveis (Self-Healing Systems)**
 
-- two pizza team - small teams to develop software as fast as possible
-	- good knowledge sharing
-	- fast decision making
-	- common sense of purpose
-	- Larger teams suffer with
-		-  hierarchy issues
-		- poor visibility
-		- infighting
-- each small team develop a decoupled service and them, each service interact with the others via network APIs
+**Como funciona**: 
+- Você declara "quero 3 replicas deste Pod"
+- Kubernetes **continuamente** verifica se há 3 replicas rodando
+- Se um Pod falhar, Kubernetes cria um novo automaticamente
+- Se um nó inteiro falhar, Pods são reschedulados
 
-Kubernetes help with it, how?
+**Vantagem operacional**: Reduz dependência de oncall/operadores experientes
+- Problemas são reparados automaticamente
+- Operadores se focam em SLA, não em reparos manuais
+- A confiabilidade não depende apenas de uptime de um nó
 
-- pods: group of containers, can group together container images developed by different teams into a single deployable unit
-- services: provide load balancing, naming, and discovery to isolate one microservice from another
-- namespaces: provide isolation and access control, so that each microservice can control the degree to which other services interact with it.
-- ingress: provide an easy-to-use frontend that can combine multiple microservices into a single externalized API surface area.
+#### **Desacoplamento (Decoupling)**
 
+**Problema**: Quando equipes e serviços crescem, comunicação entre camadas vira gargalo
+
+**Solução**: Separar responsabilidades via APIs
+- **Application Ops/SRE ↔ Kubernetes API**: App declares desired state, K8s garante
+- **Cluster Ops/SRE ↔ Kernel SyscCall API**: K8s declares needed resources, kernel fornece
+- **Hardware Ops/SRE ↔ CPU/Hardware**: Kernel gerencia recursos físicos
+
+**Resultado** (Figura 1-1 do livro):
+- Cada camada tem contrato bem definido (SLA)
+- Times podem escalar independentemente
+- Pequeno time de platform engineers pode suportar centenas de aplicações
+
+### Padrões para Escala
+
+#### **Escalando Aplicações**
+- Configuração declarativa torna trivial: "aumentar replicas de 3 para 10" = mudar um número
+- Kubernetes distribui contêineres automaticamente
+- Horizontal scaling (mais contêineres) mais eficiente que vertical (máquinas maiores)
+
+#### **Escalando Equipes com Microserviços**
+- **Two-pizza team**: 6-8 pessoas, ideal para: bom compartilhamento de conhecimento, decisões rápidas, propósito compartilhado
+- Cada time possui um microserviço desacoplado
+- Kubernetes abstrações para integração:
+  - **Pods**: Grupo de contêineres (mesmo que desenvolvidos por times diferentes)
+  - **Services**: Load balancing, DNS, service discovery
+  - **Namespaces**: Isolamento e controle de acesso
+  - **Ingress**: Frontend unificado para múltiplos microserviços
+
+**Tensão resolvida**: Quer agilidade (pequenas equipes) mas precisa de escala (muitas máquinas)?
+→ Kubernetes desacopla equipes de máquinas específicas
+
+### Considerações Práticas
+
+#### **Quando usar Kubernetes**
+- ✅ Aplicações cloud-native que precisam de velocidade e escalabilidade
+- ✅ Múltiplas equipes colaborando
+- ✅ Ambientes heterogêneos (on-prem, multi-cloud)
+
+#### **Quando considerar alternativas**
+- ❌ Aplicação monolítica simples em um único servidor
+- ❌ Organização sem experiência em containers/DevOps
+- ❌ Requisitos de ultrabaxa latência (mesmo que raro, overhead de K8s importa)
+
+#### **Managed vs Self-Managed**
+- **Kubernetes-as-a-Service (KaaS)**: GKE, AKS, EKS
+  - ✅ Reduz overhead operacional
+  - ❌ Menos flexibilidade (algumas features podem estar desabilitadas)
+  - Recomendado para organizações pequenas/médias
+- **Self-managed**: Mais flexibilidade, mas exige expertise em cluster ops
+
+### Nível de Profundidade
+
+**Intermediário**: O capítulo introduz conceitos fundamentais com rigor arquitetural, mas sem detalhes operacionais. Prepara para os capítulos seguintes que mergulham em Pods, Services, Deployments, etc.
+
+### Conexões com Outros Contextos
+
+- **DDIA (Kleppmann)**: 
+  - Imutabilidade relacionada a `Write-Once, Read-Many` storage patterns
+  - Declaração de estado vs. eventual consistency
+  - Self-healing systems parallela a tolerância a falhas em distributed systems
+- **Observabilidade/Prometheus**: Kubernetes fornece hooks nativos para liveness/readiness probes (que alimentam métricas)
+- **DevOps/GitOps**: Infrastructure-as-code em Git é o padrão de deploy em Kubernetes
+
+---
+
+**Resumo executivo**: Kubernetes resolve o problema de escalar aplicações, equipes e infraestrutura simultaneamente através de três princípios: (1) imutabilidade elimina estado desconhecido, (2) declaratividade torna reversibilidade e reproduzibilidade viáveis, (3) self-healing reduz carga operacional. O resultado é velocidade no desenvolvimento sem sacrificar confiabilidade.
